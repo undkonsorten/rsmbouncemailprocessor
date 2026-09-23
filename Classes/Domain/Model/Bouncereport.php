@@ -6,12 +6,12 @@ use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
 use Undkonsorten\CuteMailing\Domain\Model\Newsletter;
 use TYPO3\CMS\Extbase\Persistence\Generic\LazyLoadingProxy;
 
-class Bouncereport extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
+class Bouncereport extends AbstractEntity
 {
     /**
      * @var Newsletter
-     * @Lazy
      */
+    #[Lazy]
     protected $newsletterid;
 
     /**

@@ -2,11 +2,9 @@
 
 namespace RSM\Rsmbouncemailprocessor\Domain\Model;
 
-use TYPO3\CMS\Extbase\Annotation\ORM\Lazy;
 use TYPO3\CMS\Extbase\DomainObject\AbstractEntity;
-use Undkonsorten\CuteMailing\Domain\Model\Newsletter;
 
-class Recipientreport extends \TYPO3\CMS\Extbase\DomainObject\AbstractEntity
+class Recipientreport extends AbstractEntity
 {
     /**
      * @var string

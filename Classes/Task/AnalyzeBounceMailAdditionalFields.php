@@ -13,10 +13,9 @@ namespace RSM\Rsmbouncemailprocessor\Task;
  *
  * The TYPO3 project - inspiring people to share!
  */
-
+use TYPO3\CMS\Core\Type\ContextualFeedbackSeverity;
 use RSM\Rsmbouncemailprocessor\Utility\Mailserver;
 use TYPO3\CMS\Core\Localization\LanguageService;
-use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Scheduler\AbstractAdditionalFieldProvider;
 use TYPO3\CMS\Scheduler\Controller\SchedulerModuleController;
@@ -100,7 +99,7 @@ class AnalyzeBounceMailAdditionalFields extends AbstractAdditionalFieldProvider
      * @param AnalyzeBounceMail $task Reference to the scheduler backend module
      * @return void
      */
-    public function saveAdditionalFields(array $submittedData, AbstractTask $task)
+    public function saveAdditionalFields(array $submittedData, AbstractTask $task): void
     {
         $task->setServer($submittedData['bounceServer']);
         $task->setPort((int)$submittedData['bouncePort']);
@@ -141,14 +140,14 @@ class AnalyzeBounceMailAdditionalFields extends AbstractAdditionalFieldProvider
                 $this->addMessage(
                     $this->getLanguangeService()->getLL('scheduler.rsmbouncemail.dataVerification') .
                     $e->getMessage(),
-                    FlashMessage::ERROR
+                    ContextualFeedbackSeverity::ERROR
                 );
                 $return = true;
             }
         } else {
             $this->addMessage(
                 $this->getLanguangeService()->getLL('scheduler.rsmbouncemail.phpImapError'),
-                FlashMessage::ERROR
+                ContextualFeedbackSeverity::ERROR
             );
             $return = true;
         }

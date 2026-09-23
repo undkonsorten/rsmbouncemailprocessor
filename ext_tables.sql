@@ -13,7 +13,7 @@ CREATE TABLE tx_rsmbouncemailprocessor_domain_model_bouncereport
 	countoutofoffice       int(11) NOT NULL DEFAULT '0',
 	countfilterlist        int(11) NOT NULL DEFAULT '0',
 	countmessagesize       int(11) NOT NULL DEFAULT '0',
-	countpossiblespam      int(11) NOT NULL DEFAULT '0',
+	countpossiblespam      int(11) NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE tx_rsmbouncemailprocessor_domain_model_recipientreport
@@ -28,7 +28,7 @@ CREATE TABLE tx_rsmbouncemailprocessor_domain_model_recipientreport
 	countoutofoffice       int(11) NOT NULL DEFAULT '0',
 	countfilterlist        int(11) NOT NULL DEFAULT '0',
 	countmessagesize       int(11) NOT NULL DEFAULT '0',
-	countpossiblespam      int(11) NOT NULL DEFAULT '0',
+	countpossiblespam      int(11) NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE tx_rsmbouncemailprocessor_domain_model_deletelog
@@ -37,12 +37,12 @@ CREATE TABLE tx_rsmbouncemailprocessor_domain_model_deletelog
 	origpid     int(11) NOT NULL DEFAULT '0',
 	reasontext  varchar(255) DEFAULT '' NOT NULL,
 	reasonvalue int(11) NOT NULL DEFAULT '0',
-	deletetime  int(11) NOT NULL DEFAULT '0',
+	deletetime  int(11) NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE tx_rsmbouncemailprocessor_domain_model_listunsubscribeheaderlog
 (
 	email       varchar(255) DEFAULT '' NOT NULL,
 	origpid     int(11) NOT NULL DEFAULT '0',
-	deletetime  int(11) NOT NULL DEFAULT '0',
+	deletetime  int(11) NOT NULL DEFAULT '0'
 );

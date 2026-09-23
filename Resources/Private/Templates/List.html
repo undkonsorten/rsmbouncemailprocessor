@@ -1,7 +1,6 @@
 <html
 	data-namespace-typo3-fluid="true"
 	xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
-	xmlns:rsmbouncemailprocessor="http://typo3.org/ns/RSM\Rsmbouncemailprocessor\ViewHelpers"
 	lang="en">
 
 
@@ -16,7 +15,6 @@
 	<h1>
 		<f:translate key="module.bouncereports.list.title">bouncereports</f:translate>
 	</h1>
-	<f:render arguments="{_all}" partial="Miscellaneous/FlashMessages"/>
 	<f:if condition="{bouncereports}">
 		<f:then>
 			<div class="table -fit">
@@ -207,7 +205,7 @@
 									<span class="sr-only">
 										<f:translate key="module.bouncereports.list.delete">delete</f:translate>
 									</span>
-								</f:link.action>>
+								</f:link.action>
 							</div>
 						</td>
 					</tr>
