@@ -15,11 +15,8 @@ namespace RSM\Rsmbouncemailprocessor\Task;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
 use RSM\Rsmbouncemailprocessor\Utility\Mailserver;
 use RSM\Rsmbouncemailprocessor\Utility\Mailmessage;
@@ -50,6 +47,7 @@ define('ERR_REASON', [
  */
 class AnalyzeBounceMail extends AbstractTask
 {
+    use LazyServicesTrait;
 
     public $conf;
     protected $arReasontext = [
@@ -123,10 +121,6 @@ class AnalyzeBounceMail extends AbstractTask
      */
     protected NewsletterRepository $newsletterRepository;
 
-    /**
-     * @var PersistenceManager
-     */
-    protected $persistenceManager = null;
 
 
     /**
@@ -170,11 +164,6 @@ class AnalyzeBounceMail extends AbstractTask
      * @var bool
      */
     protected bool $deletealways = false;
-    public function __construct(PersistenceManager $persistenceManager, private readonly ConnectionPool $connectionPool, private readonly ConfigurationManager $configurationManager)
-    {
-        parent::__construct();
-        $this->persistenceManager = $persistenceManager;
-    }
 
     /**
      * @return int
@@ -315,9 +304,6 @@ class AnalyzeBounceMail extends AbstractTask
 
         /** @var NewsletterRepository $newsletterRepository */
         $this->newsletterRepository = GeneralUtility::makeInstance(NewsletterRepository::class);
-
-        /** @var PersistenceManager $persistenceManager */
-        $this->persistenceManager = $this->persistenceManager;
 
     }
 
@@ -516,8 +502,11 @@ class AnalyzeBounceMail extends AbstractTask
     {
         // defaults
         $table = 'tx_rsmbouncemailprocessor_domain_model_bouncereport';
-        $connection = $this->connectionPool->getConnectionForTable($table);
+        $connection = $this->connectionPool()->getConnectionForTable($table);
         $timestamp = time();
+
+        // the fetched mails are counted once per run, not once per newsletter
+        $messagesCounted = false;
 
         // Save one report for each nluid
         foreach ($this->reports as $nluid => $reportByNL) {
@@ -1172,11 +1161,12 @@ class AnalyzeBounceMail extends AbstractTask
 
                 try {
                     $recipientList->removeRecipientByEmail($listunsubscribeHeader['rcptemail']);
+                    $success = true;
                 } catch (\Exception) {
                     $logpid = null;
                 }
 
-                $this->persistenceManager->persistAll();
+                $this->persistenceManager()->persistAll();
 
                 // delete log enabled?
                 if ($logpid && isset($this->conf['settings.']['deletelog.']['enabled']) && isset($this->conf['settings.']['deletelog.']['pid'])) {
@@ -1184,7 +1174,7 @@ class AnalyzeBounceMail extends AbstractTask
                         if ($this->conf['settings.']['deletelog.']['pid'] > 0) {
 
                             // write delete log entry (tx_rsmbouncemailprocessor_domain_model_listunsubscribeheaderlog)
-                            $queryBuilderAddLog = $this->connectionPool->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_listunsubscribeheaderlog');
+                            $queryBuilderAddLog = $this->connectionPool()->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_listunsubscribeheaderlog');
                             $affectedRows = $queryBuilderAddLog
                                 ->insert('tx_rsmbouncemailprocessor_domain_model_listunsubscribeheaderlog')
                                 ->values([
@@ -1214,7 +1204,7 @@ class AnalyzeBounceMail extends AbstractTask
     {
         $mysettings = [];
 
-        $configurationManager = $this->configurationManager;
+        $configurationManager = $this->configurationManager();
         $settings = $configurationManager->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT,
             'rsmbouncemailprocessor');
 
@@ -1223,5 +1213,4 @@ class AnalyzeBounceMail extends AbstractTask
         }
         return $mysettings;
     }
-
 }

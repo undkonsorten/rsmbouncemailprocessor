@@ -15,12 +15,9 @@ namespace RSM\Rsmbouncemailprocessor\Task;
  *
  * The TYPO3 project - inspiring people to share!
  */
-use TYPO3\CMS\Extbase\Configuration\ConfigurationManager;
 use TYPO3\CMS\Extbase\Configuration\ConfigurationManagerInterface;
 use TYPO3\CMS\Core\Database\Connection;
-use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Persistence\Generic\PersistenceManager;
 use TYPO3\CMS\Scheduler\Task\AbstractTask;
 use Undkonsorten\CuteMailing\Domain\Repository\NewsletterRepository;
 
@@ -32,6 +29,7 @@ use Undkonsorten\CuteMailing\Domain\Repository\NewsletterRepository;
  */
 class ProcessBounceMail extends AbstractTask
 {
+    use LazyServicesTrait;
 
 
     public $conf;
@@ -42,15 +40,6 @@ class ProcessBounceMail extends AbstractTask
     protected NewsletterRepository $newsletterRepository;
 
 
-    /**
-     * @var PersistenceManager
-     */
-    protected $persistenceManager = null;
-    public function __construct(PersistenceManager $persistenceManager, private readonly ConnectionPool $connectionPool, private readonly ConfigurationManager $configurationManager)
-    {
-        parent::__construct();
-        $this->persistenceManager = $persistenceManager;
-    }
 
     /**
      * initializes the class
@@ -64,9 +53,6 @@ class ProcessBounceMail extends AbstractTask
 
         /** @var NewsletterRepository $newsletterRepository */
         $this->newsletterRepository = GeneralUtility::makeInstance(NewsletterRepository::class);
-
-        /** @var PersistenceManager $persistenceManager */
-        $this->persistenceManager = $this->persistenceManager;
 
     }
 
@@ -88,7 +74,7 @@ class ProcessBounceMail extends AbstractTask
         $this->initClass();
 
         // first, query all newsletters grouped by recipient_list to get the recipient lists
-        $queryBuilderReadNewsletter = $this->connectionPool->getQueryBuilderForTable('tx_cutemailing_domain_model_newsletter');
+        $queryBuilderReadNewsletter = $this->connectionPool()->getQueryBuilderForTable('tx_cutemailing_domain_model_newsletter');
         $queryBuilderReadNewsletter = $queryBuilderReadNewsletter
             ->select('uid', 'recipient_list')
             ->from('tx_cutemailing_domain_model_newsletter')
@@ -115,7 +101,7 @@ class ProcessBounceMail extends AbstractTask
 //\TYPO3\CMS\Core\Utility\DebugUtility::debug($recipientLists, '$recipientLists');
 
         // Walk through the recipientreport and get those rcords that reached their limits
-        $connection = $this->connectionPool->getConnectionForTable('tx_rsmbouncemailprocessor_domain_model_recipientreport');
+        $connection = $this->connectionPool()->getConnectionForTable('tx_rsmbouncemailprocessor_domain_model_recipientreport');
 
         // Walk through all the delete limits
         if (isset($this->conf['settings.']['deletelimits.'])) {
@@ -125,7 +111,7 @@ class ProcessBounceMail extends AbstractTask
                 if ($key !== '' && $limit > 0) {
 
                     // query the affected records
-                    $queryBuilderReadRecipientreport = $this->connectionPool->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_recipientreport');
+                    $queryBuilderReadRecipientreport = $this->connectionPool()->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_recipientreport');
                     $resultReadRecipientreport = $queryBuilderReadRecipientreport
                         ->select('*')
                         ->from('tx_rsmbouncemailprocessor_domain_model_recipientreport')
@@ -163,7 +149,7 @@ class ProcessBounceMail extends AbstractTask
                                             if ($this->conf['settings.']['deletelog.']['pid'] > 0) {
 
                                                 // write delete log entry
-                                                $queryBuilderAddLog = $this->connectionPool->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_deletelog');
+                                                $queryBuilderAddLog = $this->connectionPool()->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_deletelog');
                                                 $affectedRows = $queryBuilderAddLog
                                                     ->insert('tx_rsmbouncemailprocessor_domain_model_deletelog')
                                                     ->values([
@@ -187,7 +173,7 @@ class ProcessBounceMail extends AbstractTask
                         }
 
                         // Make persistent
-                        $this->persistenceManager->persistAll();
+                        $this->persistenceManager()->persistAll();
 
                     }
                 }
@@ -210,7 +196,7 @@ class ProcessBounceMail extends AbstractTask
     ): array {
         $mysettings = [];
 
-        $configurationManager = $this->configurationManager;
+        $configurationManager = $this->configurationManager();
         $settings = $configurationManager->getConfiguration(ConfigurationManagerInterface::CONFIGURATION_TYPE_FULL_TYPOSCRIPT,
             'rsmbouncemailprocessor');
 
@@ -219,5 +205,4 @@ class ProcessBounceMail extends AbstractTask
         }
         return $mysettings;
     }
-
 }
