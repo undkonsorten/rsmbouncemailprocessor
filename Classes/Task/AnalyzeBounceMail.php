@@ -317,11 +317,17 @@ class AnalyzeBounceMail extends AbstractTask
         // defaults
         $result = false;
 
+        // the mailbox cannot be read without php imap
+        if (!extension_loaded('imap')) {
+            $this->logger?->error('PHP extension imap is not loaded, bounce mails cannot be read');
+            return false;
+        }
+
         // init
         $this->initClass();
 
         // try to connect to mail server
-        $this->mailServer->connect(
+        $connection = $this->mailServer->connect(
             $this->server,
             $this->user,
             $this->password,
@@ -330,7 +336,7 @@ class AnalyzeBounceMail extends AbstractTask
         );
 
         // proceed with the mails
-        if ($this->mailServer instanceof Mailserver) {
+        if ($connection instanceof Mailserver) {
 
             // get the messages from the server stream
             $this->messages = $this->mailServer->search('UNSEEN', $this->maxProcessed);
@@ -474,8 +480,8 @@ class AnalyzeBounceMail extends AbstractTask
 
         // Save BounceItems
         $bounceItem['sender'] = SENDER_ORG;
-        $bounceItem['reason_id'] = $bounceReport['reason'];
-        $bounceItem['reason_text'] = ERR_REASON[$bounceReport['reason']];
+        $bounceItem['reason_id'] = isset(ERR_REASON[$bounceReport['reason']]) ? $bounceReport['reason'] : '-1';
+        $bounceItem['reason_text'] = ERR_REASON[$bounceItem['reason_id']];
         $bounceItem['recipient'] = $orgrecipient;
         $this->arBounces[] = $bounceItem;
 
@@ -522,6 +528,7 @@ class AnalyzeBounceMail extends AbstractTask
                 $newsletter = $this->newsletterRepository->findByUid($nluid);
 
                 // get the pid from the newsletteruid
+                $pid = 0;
                 if ($newsletter) {
                     $pid = $newsletter->getPid();
                 }
@@ -573,7 +580,10 @@ class AnalyzeBounceMail extends AbstractTask
                     }
 
                     // add current data
-                    $countmails += count($this->messages);
+                    if (!$messagesCounted) {
+                        $countmails += count($this->messages);
+                        $messagesCounted = true;
+                    }
                     $countprocessed += $counttotal;
                     $countunknownreason += count($reportByNL['-1'] ?? []);
                     $countnosenderfound += count($reportByNL['-2'] ?? []);
@@ -635,17 +645,21 @@ class AnalyzeBounceMail extends AbstractTask
         $timestamp = time();
 
         // Objects
-        $connection = $this->connectionPool->getConnectionForTable($table);
+        $connection = $this->connectionPool()->getConnectionForTable($table);
 
         // Save one reort for each nluid
         foreach ($this->reports as $nluid => $reportByNL) {
 
-            $pid = 2;
+            $pid = $this->getRecipientreportFallbackPid();
             if ($nluid) {
                 $newsletter = $this->newsletterRepository->findByUid($nluid);
                 if ($newsletter) {
                     $pid = $newsletter->getPid();
                 }
+            }
+            if (!$pid) {
+                $this->logger?->warning('Bounce recipient report skipped: newsletter not found and no recipientreport.fallbackpid / deletelog.pid configured', ['nluid' => $nluid]);
+                continue;
             }
 
             foreach ($reportByNL as $bounceReasons) {
@@ -696,13 +710,8 @@ class AnalyzeBounceMail extends AbstractTask
                     // raise the count depending the reason
                     switch ($reason_id) {
 
-                        # unknown reason
-                        case '-2':
-                            $countunknownreason++;
-                            break;
-
                         # no sender found
-                        case '-1':
+                        case '-2':
                             $countnosenderfound++;
                             break;
 
@@ -744,6 +753,12 @@ class AnalyzeBounceMail extends AbstractTask
                         # Possible Spam
                         case 'XSPAM':
                             $countpossiblespam++;
+                            break;
+
+                        # unknown reason
+                        case '-1':
+                        default:
+                            $countunknownreason++;
                             break;
                     }
 
@@ -822,7 +837,8 @@ class AnalyzeBounceMail extends AbstractTask
                 $cp['reason'] = 550;
                 // No such user
             } elseif (stristr($cp['reason_text'], '553')) {
-                $cp['reason'] = 553;
+                // 553 mailbox name not allowed: the address is invalid, same as user unknown
+                $cp['reason'] = 550;
                 // Mailbox full
             } elseif (stristr($cp['reason_text'], '551')) {
                 $cp['reason'] = 551;
@@ -957,19 +973,12 @@ class AnalyzeBounceMail extends AbstractTask
     private function searchString(string $content, string $search): string
     {
         $found = '';
-        $iPos1 = stripos($content, $search);
-        if ($iPos1 > 0) {
-            $iPos1 += strlen($search) + 1;
-            if ($iPos1 < strlen($content)) {
-                $iPos2 = stripos($content, ' ', $iPos1);
-                $iPos3 = stripos($content, "\n", $iPos1);
-                if ($iPos3 < $iPos2 && $iPos3 > 0) {
-                    $iPos2 = $iPos3;
-                }
-                if ($iPos2 > $iPos1) {
-                    $found = trim(substr($content, $iPos1, $iPos2 - $iPos1));
-                }
-
+        $position = stripos($content, $search);
+        if ($position !== false) {
+            // the value starts after the search string and the blank behind it, and ends at the next blank or line break
+            $start = $position + strlen($search) + 1;
+            if ($start < strlen($content)) {
+                $found = trim(substr($content, $start, strcspn($content, " \r\n", $start)));
             }
         }
         return $found;
@@ -991,7 +1000,7 @@ class AnalyzeBounceMail extends AbstractTask
         $plainmsg = '';
 
         // BODY
-        $structure = imap_fetchstructure($this->mailServer->getImapStream(), $mid);
+        $structure = imap_fetchstructure($this->mailServer->getImapStream(), $mid, FT_UID);
         if (!isset($structure->parts)) {
             // getpart($mbox,$mid,$s,0);  // pass 0 as part-number
             $plainmsg .= $this->imapGetPart($mid, $structure, 0, $plainmsg);  // pass 0 as part-number
@@ -1012,8 +1021,9 @@ class AnalyzeBounceMail extends AbstractTask
         // $partno = '1', '2', '2.1', '2.1.3', etc for multipart, 0 if simple
 
         // DECODE DATA
+        // $mid is the IMAP uid, which differs from the message number as soon as mails were deleted
         $data = ($partno) ? imap_fetchbody($this->mailServer->getImapStream(), $mid,
-            strval($partno)) : imap_body($this->mailServer->getImapStream(), $mid);
+            strval($partno), FT_UID | FT_PEEK) : imap_body($this->mailServer->getImapStream(), $mid, FT_UID | FT_PEEK);
 
         // Any part may be encoded, even plain text messages, so check everything.
         if ($part->encoding == 4) {
@@ -1081,15 +1091,18 @@ class AnalyzeBounceMail extends AbstractTask
 
         if ($mailmessage) {
 
-            // parse the subject
+            // parse the subject, mail clients may leave it url encoded
             $unsubscribe = [];
-            $subject = $mailmessage->getSubject();
+            $subject = (string)$mailmessage->getSubject();
+            if (str_contains($subject, '%3D') || str_contains($subject, '%26')) {
+                $subject = rawurldecode($subject);
+            }
 
             $arSubjectLevel1 = explode('&', $subject);
             foreach ($arSubjectLevel1 as $subjectLevel1) {
-                $arSubjectLevel2 = explode('=', $subjectLevel1);
+                $arSubjectLevel2 = explode('=', $subjectLevel1, 2);
                 if (isset($arSubjectLevel2[0]) && isset($arSubjectLevel2[1])) {
-                    $unsubscribe[$arSubjectLevel2[0]] = $arSubjectLevel2[1];
+                    $unsubscribe[trim($arSubjectLevel2[0])] = trim($arSubjectLevel2[1]);
                 }
             }
 
@@ -1131,7 +1144,7 @@ class AnalyzeBounceMail extends AbstractTask
     private function processlistunsubscribeHeader(array $listunsubscribeHeader): bool
     {
         $success = false;
-        $nluid = null;
+        $sendout = null;
         $newsletter = null;
         $recipientList = null;
 
@@ -1193,6 +1206,19 @@ class AnalyzeBounceMail extends AbstractTask
             }
         }
         return $success;
+    }
+
+    /**
+     * Page for recipient reports of bounces whose newsletter is unknown:
+     * TS settings.recipientreport.fallbackpid, else settings.deletelog.pid, else 0 (= do not save)
+     */
+    private function getRecipientreportFallbackPid(): int
+    {
+        $pid = (int)($this->conf['settings.']['recipientreport.']['fallbackpid'] ?? 0);
+        if ($pid <= 0) {
+            $pid = (int)($this->conf['settings.']['deletelog.']['pid'] ?? 0);
+        }
+        return max($pid, 0);
     }
 
     /**
