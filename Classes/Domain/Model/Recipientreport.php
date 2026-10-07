@@ -14,58 +14,58 @@ class Recipientreport extends AbstractEntity
     /**
      * @var int
      */
-    protected $countunknownreason;
+    protected $countunknownreason = 0;
 
     /**
      * @var int
      */
-    protected $countnosenderfound;
+    protected $countnosenderfound = 0;
 
     /**
      * @var int
      */
-    protected $countuserunknown;
+    protected $countuserunknown = 0;
 
     /**
      * @var int
      */
-    protected $countquotaexceeded;
+    protected $countquotaexceeded = 0;
 
     /**
      * @var int
      */
-    protected $countconnectionrefused;
+    protected $countconnectionrefused = 0;
 
     /**
      * @var int
      */
-    protected $countheadererror;
+    protected $countheadererror = 0;
 
     /**
      * @var int
      */
-    protected $countoutofoffice;
+    protected $countoutofoffice = 0;
 
     /**
      * @var int
      */
-    protected $countfilterlist;
+    protected $countfilterlist = 0;
 
     /**
      * @var int
      */
-    protected $countmessagesize;
+    protected $countmessagesize = 0;
 
     /**
      * @var int
      */
-    protected $countpossiblespam;
+    protected $countpossiblespam = 0;
 
 
     /**
      * @var int
      */
-    protected $countsum;
+    protected $countsum = 0;
 
 
     /**
@@ -252,7 +252,7 @@ class Recipientreport extends AbstractEntity
      */
     public function getCountsum(): int
     {
-        return $this->countpossiblespam + $this->countunknownreason + $this->countnosenderfound + $this->countuserunknown + $this->countquotaexceeded + $this->countconnectionrefused + $this->countheadererror + $this->countoutofoffice + $this->countfilterlist + $this->countmessagesize + $this->countpossiblespam;
+        return $this->countunknownreason + $this->countnosenderfound + $this->countuserunknown + $this->countquotaexceeded + $this->countconnectionrefused + $this->countheadererror + $this->countoutofoffice + $this->countfilterlist + $this->countmessagesize + $this->countpossiblespam;
     }
 
 

@@ -1,8 +1,8 @@
 <html
 	data-namespace-typo3-fluid="true"
 	xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+	xmlns:core="http://typo3.org/ns/TYPO3/CMS/Core/ViewHelpers"
 	lang="en">
-
 
 <f:layout name="Backend"/>
 
@@ -10,151 +10,91 @@
 	<f:render arguments="{_all}" section="Recipientreports"/>
 </f:section>
 
+<f:section name="Reason">
+	<span class="badge text-bg-{reason.severity} rsm-reason"
+		title="{f:translate(key: 'module.bouncereports.list.tableheader.{reason.countKey}', extensionName: 'Rsmbouncemailprocessor')}: {reason.count} ({reason.percent -> f:format.number(decimals: 0)} %)">
+		<f:translate key="module.bouncereports.list.tableheader.{reason.countKey}" extensionName="Rsmbouncemailprocessor">{reason.name}</f:translate>
+		<span class="rsm-reason-count">{reason.count}</span>
+	</span>
+</f:section>
+
 <f:section name="Recipientreports">
 
+	<f:variable name="confirmTitle"><f:translate key="module.delete.confirm.title" extensionName="Rsmbouncemailprocessor">Delete report</f:translate></f:variable>
+	<f:variable name="confirmText"><f:translate key="module.delete.confirm.text" extensionName="Rsmbouncemailprocessor">Do you really want to delete this report? This cannot be undone.</f:translate></f:variable>
+	<f:variable name="confirmCancel"><f:translate key="module.delete.confirm.cancel" extensionName="Rsmbouncemailprocessor">Cancel</f:translate></f:variable>
+	<f:variable name="confirmOk"><f:translate key="module.delete.confirm.ok" extensionName="Rsmbouncemailprocessor">Delete</f:translate></f:variable>
+
 	<h1>
-		<f:translate key="module.recipientreports.list.title">recipientreports</f:translate>
+		<f:translate key="module.recipientreports.list.title">Recipient Reports</f:translate>
 	</h1>
-	<f:if condition="{recipientreports}">
-		<f:then>
 
-			<f:form
-				action="recipientlist"
-				name="filter"
-				id="rsmbouncemailprocessor_recipientlist_search">
-
-				<fieldset>
-					<div class="form-group">
-						<label for="searchstring">Volltextsuche:</label>
-						<f:form.textfield
-							property="searchstring"
-							value="{piVars.filter.searchstring}"
-							id="searchstring"
-							class="form-control" />
-					</div>
-
-					<div class="form-group">
-						<label for="searchstring">Mindestanzahl Fehler:</label>
-						<f:form.textfield
-							property="searchamount"
-							value="{piVars.filter.searchamount}"
-							id="searchamount"
-							class="form-control" />
-					</div>
-
-					<div class="form-group">
-						<f:form.submit
-							value="Suchen"
-							class="btn btn-primary" />
-					</div>
-
-				</fieldset>
+	<div class="card mb-4 rsm-filter">
+		<div class="card-body">
+			<f:form action="recipientlist" name="filter" id="rsmbouncemailprocessor_recipientlist_search" class="row g-3 align-items-end">
+				<div class="col-12 col-md-5">
+					<label for="searchstring" class="form-label"><f:translate key="module.recipientreports.filter.searchstring" extensionName="Rsmbouncemailprocessor">Email contains</f:translate></label>
+					<f:form.textfield property="searchstring" value="{piVars.filter.searchstring}" id="searchstring" class="form-control" />
+				</div>
+				<div class="col-12 col-md-3">
+					<label for="searchamount" class="form-label"><f:translate key="module.recipientreports.filter.searchamount" extensionName="Rsmbouncemailprocessor">Minimum bounces</f:translate></label>
+					<f:form.textfield property="searchamount" value="{piVars.filter.searchamount}" id="searchamount" class="form-control" type="number" additionalAttributes="{min: '0'}" />
+				</div>
+				<div class="col-12 col-md-4 d-flex gap-2">
+					<f:form.submit value="{f:translate(key: 'module.recipientreports.filter.submit', extensionName: 'Rsmbouncemailprocessor')}" class="btn btn-primary" />
+					<f:if condition="{filterActive}">
+						<f:link.action action="recipientlist" class="btn btn-default">
+							<f:translate key="module.recipientreports.filter.reset" extensionName="Rsmbouncemailprocessor">Reset</f:translate>
+						</f:link.action>
+					</f:if>
+				</div>
 			</f:form>
-			<table class="table table-striped table-condensed">
-				<thead>
+		</div>
+	</div>
+
+	<p class="text-body-secondary">
+		<f:translate key="module.recipientreports.list.count" extensionName="Rsmbouncemailprocessor" arguments="{0: summary.recipients}">%s recipients</f:translate>
+	</p>
+
+	<div class="table-fit">
+		<table class="table table-hover align-middle rsm-table">
+			<thead>
 				<tr>
-					<th>
-						<f:translate key="module.recipientreports.list.tableheader.email">email</f:translate>
-					</th>
-					<th class="bouncemail_right">
-						<f:translate key="module.recipientreports.list.tableheader.summe">summe</f:translate>
-					</th>
-					<th>
-						<f:translate key="module.bouncereports.list.tableheader.bounceanalyse">bounceanalyse</f:translate>
-					</th>
-					<th class="bouncemail_right">
-						<f:translate key="module.recipientreports.list.tableheader.action">action</f:translate>
-					</th>
+					<th><f:translate key="module.recipientreports.list.tableheader.email">email</f:translate></th>
+					<th class="text-end"><f:translate key="module.recipientreports.list.tableheader.summe">sum</f:translate></th>
+					<th><f:translate key="module.bouncereports.list.tableheader.reasons" extensionName="Rsmbouncemailprocessor">Reasons</f:translate></th>
+					<th class="text-end"><f:translate key="module.recipientreports.list.tableheader.action">Action</f:translate></th>
 				</tr>
-				</thead>
-				<tbody>
-
-				<f:for each="{recipientreports}" as="recipientreport" iteration="iteration">
+			</thead>
+			<tbody>
+				<f:for each="{rows}" as="row">
 					<tr>
-						<td class="" title="uid={recipientreport.uid}">
-							{recipientreport.email}
-						</td>
-						<td class="bouncemail_right">
-							{recipientreport.countsum}
-						</td>
-
 						<td>
-							<table>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countunknownreason">countunknownreason</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countunknownreason}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countnosenderfound">countnosenderfound</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countnosenderfound}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countuserunknown">countuserunknown</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countuserunknown}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countquotaexceeded">countquotaexceeded</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countquotaexceeded}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countconnectionrefused">countconnectionrefused</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countconnectionrefused}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countheadererror">countheadererror</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countheadererror}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countoutofoffice">countoutofoffice</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countoutofoffice}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countfilterlist">countfilterlist</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countfilterlist}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countmessagesize">countmessagesize</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countmessagesize}</td>
-								</tr>
-								<tr>
-									<td><f:translate key="module.bouncereports.list.tableheader.countpossiblespam">countpossiblespam</f:translate>:</td>
-									<td class="bouncemail_right">{recipientreport.countpossiblespam}</td>
-								</tr>
-							</table>
-
+							<strong>{row.report.email}</strong>
+							<div class="text-body-secondary small">uid {row.report.uid}</div>
 						</td>
-
-
-
-						<td class="bouncemail_right">
-
-							<div class="btn-group">
-								<f:link.action
-									action="delete"
-									additionalAttributes=""
-									arguments="{recipientreport:recipientreport}"
-									class="btn btn-default t3js-record-delete"
-									title="{f:translate(key: 'module.recipientreports.list.delete', extensionName: 'Rsmbouncemailprocessor')}">
-									<span
-										class="t3js-icon icon icon-size-small icon-state-default icon-actions-edit-delete"
-										data-identifier="actions-edit-delete">
-										<span class="icon-markup">
-											<svg class="icon-color">
-												<use
-													xlink:href="/typo3/sysext/core/Resources/Public/Icons/T3Icons/sprites/actions.svg#actions-delete"></use>
-											</svg>
-										</span>
-									</span>
-									<span class="sr-only">
-										<f:translate key="module.newsletter.list.delete">delete</f:translate>
-									</span>
-								</f:link.action>
+						<td class="text-end"><span class="badge text-bg-secondary">{row.total}</span></td>
+						<td>
+							<div class="rsm-reasons">
+								<f:for each="{row.reasons}" as="reason">
+									<f:render section="Reason" arguments="{reason: reason}" />
+								</f:for>
 							</div>
+						</td>
+						<td class="text-end">
+							<f:link.action
+								action="delete"
+								arguments="{recipientreport: row.report}"
+								class="btn btn-default btn-sm t3js-modal-trigger"
+								data="{severity: 'warning', title: confirmTitle, bs-content: confirmText, button-close-text: confirmCancel, button-ok-text: confirmOk}"
+								title="{f:translate(key: 'module.recipientreports.list.delete', extensionName: 'Rsmbouncemailprocessor')}">
+								<core:icon identifier="actions-edit-delete" size="small" />
+							</f:link.action>
 						</td>
 					</tr>
 				</f:for>
-				</tbody>
-			</table>
-		</f:then>
-	</f:if>
+			</tbody>
+		</table>
+	</div>
 </f:section>
+</html>

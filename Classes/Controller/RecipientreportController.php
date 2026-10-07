@@ -16,6 +16,7 @@ use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 
 use RSM\Rsmbouncemailprocessor\Domain\Model\Recipientreport;
 use RSM\Rsmbouncemailprocessor\Domain\Repository\RecipientreportRepository;
+use RSM\Rsmbouncemailprocessor\Service\ReportPresenter;
 use Undkonsorten\CuteMailing\Domain\Repository\NewsletterRepository;
 use Undkonsorten\CuteMailing\Domain\Repository\RecipientListRepositoryInterface;
 
@@ -50,7 +51,8 @@ class RecipientreportController extends ActionController
         RecipientreportRepository $recipientreportRepository,
         NewsletterRepository $newsletterRepository,
         RecipientListRepositoryInterface $recipientListRepository,
-        private readonly ModuleTemplateFactory $moduleTemplateFactory
+        private readonly ModuleTemplateFactory $moduleTemplateFactory,
+        private readonly ReportPresenter $reportPresenter
     ) {
         $this->recipientreportRepository = $recipientreportRepository;
         $this->newsletterRepository = $newsletterRepository;
@@ -94,9 +96,11 @@ class RecipientreportController extends ActionController
         }
 
         $moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+        $moduleTemplate->assignMultiple($this->reportPresenter->presentRecipientreports($recipientreports));
         $moduleTemplate->assignMultiple([
-            'recipientreports' => $recipientreports,
-            'piVars' => $piVars
+            'piVars' => $piVars,
+            'filterActive' => $searchstring !== '' || $searchamount > 0,
+            'activeTab' => 'recipients',
         ]);
         return $moduleTemplate->renderResponse('Recipientlist');
     }
@@ -117,6 +121,7 @@ class RecipientreportController extends ActionController
     public function choosePageAction(): ResponseInterface
     {
         $moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+        $moduleTemplate->assign('activeTab', 'recipients');
         return $moduleTemplate->renderResponse('ChoosePage');
     }
 

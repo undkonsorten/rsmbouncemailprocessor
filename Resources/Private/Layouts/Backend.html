@@ -8,17 +8,23 @@
 	<f:if condition="{docHeader.enabled}">
 		<f:render partial="DocHeader" arguments="{docHeader:docHeader}" />
 	</f:if>
-	<div class="module-body t3js-module-body">
+	<div class="module-body t3js-module-body rsm-bounce">
 		<f:flashMessages queueIdentifier="{flashMessageQueueIdentifier}" />
 
-		<div class="btn-group" role="group">
-			<f:link.action action="list" class="btn btn-default" controller="Bouncemail">
-				<f:translate key="module.bouncereports.link.action.bouncereport">bouncereport</f:translate>
-			</f:link.action>
-			<f:link.action action="recipientlist" class="btn btn-default" controller="Recipientreport">
-				<f:translate key="module.bouncereports.link.action.recipientreport">recipientreport</f:translate>
-			</f:link.action>
-		</div>
+		<ul class="nav nav-tabs rsm-bounce-tabs" role="tablist" data-active-tab="{activeTab}">
+			<li class="nav-item" role="presentation">
+				<f:link.action action="list" controller="Bouncemail"
+					class="nav-link {f:if(condition: '{activeTab} == \'bounces\'', then: 'active')}">
+					<f:translate key="module.bouncereports.link.action.bouncereport">Bounce Report</f:translate>
+				</f:link.action>
+			</li>
+			<li class="nav-item" role="presentation">
+				<f:link.action action="recipientlist" controller="Recipientreport"
+					class="nav-link {f:if(condition: '{activeTab} == \'recipients\'', then: 'active')}">
+					<f:translate key="module.bouncereports.link.action.recipientreport">Recipient Report</f:translate>
+				</f:link.action>
+			</li>
+		</ul>
 
 		<f:be.pageRenderer
 			includeCssFiles="{0: 'EXT:rsmbouncemailprocessor/Resources/Public/Css/Modules.css'}"

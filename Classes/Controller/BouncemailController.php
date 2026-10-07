@@ -16,6 +16,7 @@ use TYPO3\CMS\Extbase\Utility\LocalizationUtility;
 
 use RSM\Rsmbouncemailprocessor\Domain\Model\Bouncereport;
 use RSM\Rsmbouncemailprocessor\Domain\Repository\BouncereportRepository;
+use RSM\Rsmbouncemailprocessor\Service\ReportPresenter;
 use Undkonsorten\CuteMailing\Domain\Repository\NewsletterRepository;
 use Undkonsorten\CuteMailing\Domain\Repository\RecipientListRepositoryInterface;
 
@@ -49,7 +50,8 @@ class BouncemailController extends ActionController
         BouncereportRepository $bouncereportRepository,
         NewsletterRepository $newsletterRepository,
         RecipientListRepositoryInterface $recipientListRepository,
-        private readonly ModuleTemplateFactory $moduleTemplateFactory
+        private readonly ModuleTemplateFactory $moduleTemplateFactory,
+        private readonly ReportPresenter $reportPresenter
     ) {
         $this->bouncereportRepository = $bouncereportRepository;
         $this->newsletterRepository = $newsletterRepository;
@@ -75,15 +77,15 @@ class BouncemailController extends ActionController
         }
 
         $moduleTemplate = $this->moduleTemplateFactory->create($this->request);
-        $moduleTemplate->assignMultiple([
-            'bouncereports' => $bouncereports,
-        ]);
+        $moduleTemplate->assignMultiple($this->reportPresenter->presentBouncereports($bouncereports));
+        $moduleTemplate->assign('activeTab', 'bounces');
         return $moduleTemplate->renderResponse('List');
     }
 
     public function choosePageAction(): ResponseInterface
     {
         $moduleTemplate = $this->moduleTemplateFactory->create($this->request);
+        $moduleTemplate->assign('activeTab', 'bounces');
         return $moduleTemplate->renderResponse('ChoosePage');
     }
 
