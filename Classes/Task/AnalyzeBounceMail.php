@@ -127,37 +127,37 @@ class AnalyzeBounceMail extends AbstractTask
      * url of the mail server
      * @var string
      */
-    protected string $server;
+    protected string $server = '';
 
     /**
      * Port number of the mail server
      * @var int
      */
-    protected int $port;
+    protected int $port = 143;
 
     /**
      * Username to use to authenticate
      * @var string
      */
-    protected string $user;
+    protected string $user = '';
 
     /**
      * Password of the user
      * @var string
      */
-    protected string $password;
+    protected string $password = '';
 
     /**
      * Mailserver service (imap or pop3)
      * @var string
      */
-    protected string $service;
+    protected string $service = 'imap';
 
     /**
      * Maximum number of bounce mail to be processed
      * @var int
      */
-    protected int $maxProcessed;
+    protected int $maxProcessed = 100;
 
     /**
      * Delete every mail after processing
