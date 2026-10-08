@@ -1162,8 +1162,13 @@ class AnalyzeBounceMail extends AbstractTask
             }
 
             // get the recipientList
+            // cute_mailing throws if the recipient list cannot be loaded
             if ($newsletter) {
-                $recipientList = $newsletter->getRecipientList();
+                try {
+                    $recipientList = $newsletter->getRecipientList();
+                } catch (\TypeError) {
+                    $this->logger?->warning('Recipient list of newsletter could not be loaded, list-unsubscribe skipped', ['newsletter' => $newsletter->getUid()]);
+                }
             }
 
             // remove the recipient from the list

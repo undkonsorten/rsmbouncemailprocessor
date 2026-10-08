@@ -90,8 +90,13 @@ class ProcessBounceMail extends AbstractTask
             if ($row['uid']) {
                 $newsletter = $this->newsletterRepository->findByUid($row['uid']);
                 if ($newsletter) {
-                    // get the newsletters recipient list
-                    $recipientList = $newsletter->getRecipientList();
+                    // get the newsletters recipient list, cute_mailing throws if it cannot be loaded
+                    try {
+                        $recipientList = $newsletter->getRecipientList();
+                    } catch (\TypeError) {
+                        $recipientList = null;
+                        $this->logger?->warning('Recipient list of newsletter could not be loaded, skipped', ['newsletter' => $row['uid']]);
+                    }
                     if ($recipientList) {
                         $recipientLists[$recipientList->getUid()] = $recipientList;
                     }
