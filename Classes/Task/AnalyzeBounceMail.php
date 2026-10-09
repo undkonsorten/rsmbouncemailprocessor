@@ -776,6 +776,8 @@ class AnalyzeBounceMail extends AbstractTask
                             'countfilterlist' => $countfilterlist,
                             'countmessagesize' => $countmessagesize,
                             'countpossiblespam' => $countpossiblespam,
+                            // a new bounce, the address has to be removed (again)
+                            'removed' => 0,
                         ];
 
                     // INSERT
