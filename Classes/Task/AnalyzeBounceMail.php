@@ -557,7 +557,7 @@ class AnalyzeBounceMail extends AbstractTask
                         ->select(
                             ['*'],
                             $table,
-                            ['newsletterid' => $nluid]
+                            ['newsletterid' => $nluid, 'deleted' => 0]
                         );
 
                     if ($resultRows) {
