@@ -123,6 +123,8 @@ class ProcessBounceMail extends AbstractTask
                         ->where(
                             $queryBuilderReadRecipientreport->expr()->gte($key,
                                 $queryBuilderReadRecipientreport->createNamedParameter($limit, Connection::PARAM_INT)),
+                            // already removed, nothing to do until the address bounces again
+                            $queryBuilderReadRecipientreport->expr()->eq('removed', 0),
                         )
                         ->executeQuery();
 
@@ -134,6 +136,7 @@ class ProcessBounceMail extends AbstractTask
 
                         // remove the recipient from all recipient lists we've found
                         $listid = 0;
+                        $removed = false;
                         foreach ($recipientLists as $recipientList) {
                             if ($recipientList && $row['email']) {
 
@@ -143,6 +146,7 @@ class ProcessBounceMail extends AbstractTask
                                 // remove the recipient
                                 try {
                                     $recipientList->removeRecipientByEmail($row['email']);
+                                    $removed = true;
                                 } catch (\Exception) {
                                     $logpid = null;
                                 }
@@ -179,6 +183,15 @@ class ProcessBounceMail extends AbstractTask
 
                         // Make persistent
                         $this->persistenceManager()->persistAll();
+
+                        // mark the report, so it is shown as removed and not processed again
+                        if ($removed) {
+                            $connection->update(
+                                'tx_rsmbouncemailprocessor_domain_model_recipientreport',
+                                ['removed' => time(), 'tstamp' => time()],
+                                ['uid' => (int)$row['uid']]
+                            );
+                        }
 
                     }
                 }
