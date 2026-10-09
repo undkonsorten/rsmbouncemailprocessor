@@ -201,6 +201,18 @@
 			<trans-unit id="module.recipientreports.filter.searchamount">
 				<source>Minimum bounces</source>
 			</trans-unit>
+			<trans-unit id="module.recipientreports.filter.status">
+				<source>Status</source>
+			</trans-unit>
+			<trans-unit id="module.recipientreports.filter.status.all">
+				<source>All</source>
+			</trans-unit>
+			<trans-unit id="module.recipientreports.filter.status.open">
+				<source>Not removed</source>
+			</trans-unit>
+			<trans-unit id="module.recipientreports.filter.status.removed">
+				<source>Removed</source>
+			</trans-unit>
 			<trans-unit id="module.recipientreports.filter.submit">
 				<source>Search</source>
 			</trans-unit>

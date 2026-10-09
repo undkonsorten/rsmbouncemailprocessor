@@ -22,7 +22,7 @@ class RecipientreportRepository extends Repository
     /**
      * @return array|object[]|QueryResultInterface
      */
-    public function findByRootline(array $rootline, string $searchstring = '', int $searchamount = 0)
+    public function findByRootline(array $rootline, string $searchstring = '', int $searchamount = 0, string $status = '')
     {
         $storagePageIds = [];
         foreach ($rootline as $key => $value) {
@@ -51,6 +51,11 @@ class RecipientreportRepository extends Repository
             $orconstraints[] = $query->greaterThanOrEqual('countmessagesize', $searchamount);
             $orconstraints[] = $query->greaterThanOrEqual('countpossiblespam', $searchamount);
             $constraints[] =$query->logicalOr(...$orconstraints);
+        }
+        if ($status === 'removed') {
+            $constraints[] = $query->greaterThan('removed', 0);
+        } elseif ($status === 'open') {
+            $constraints[] = $query->equals('removed', 0);
         }
 
         if(count($constraints)){

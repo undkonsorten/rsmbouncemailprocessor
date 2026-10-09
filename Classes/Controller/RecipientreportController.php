@@ -66,6 +66,7 @@ class RecipientreportController extends ActionController
     {
         $searchstring = '';
         $searchamount = 0;
+        $status = '';
         $piVars = [];
 
 
@@ -79,6 +80,10 @@ class RecipientreportController extends ActionController
                 $searchamount = intval($filter['searchamount']);
                 $piVars['filter']['searchamount'] = $searchamount;
             }
+            if (in_array($filter['status'] ?? '', ['open', 'removed'], true)) {
+                $status = $filter['status'];
+                $piVars['filter']['status'] = $status;
+            }
 
         }
         //$arguments = $this->request->getArguments();
@@ -90,7 +95,7 @@ class RecipientreportController extends ActionController
             return new ForwardResponse('choosePage');
         }
         $rootline = GeneralUtility::makeInstance(RootlineUtility::class, $currentPid)->get();
-        $recipientreports = $this->recipientreportRepository->findByRootline($rootline, $searchstring, $searchamount);
+        $recipientreports = $this->recipientreportRepository->findByRootline($rootline, $searchstring, $searchamount, $status);
         if (! count($recipientreports)) {
             return new ForwardResponse('choosePage');
         }
@@ -99,7 +104,7 @@ class RecipientreportController extends ActionController
         $moduleTemplate->assignMultiple($this->reportPresenter->presentRecipientreports($recipientreports));
         $moduleTemplate->assignMultiple([
             'piVars' => $piVars,
-            'filterActive' => $searchstring !== '' || $searchamount > 0,
+            'filterActive' => $searchstring !== '' || $searchamount > 0 || $status !== '',
             'activeTab' => 'recipients',
         ]);
         return $moduleTemplate->renderResponse('Recipientlist');

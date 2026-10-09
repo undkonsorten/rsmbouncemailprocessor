@@ -32,13 +32,21 @@
 	<div class="card mb-4 rsm-filter">
 		<div class="card-body">
 			<f:form action="recipientlist" name="filter" id="rsmbouncemailprocessor_recipientlist_search" class="row g-3 align-items-end">
-				<div class="col-12 col-md-5">
+				<div class="col-12 col-md-4">
 					<label for="searchstring" class="form-label"><f:translate key="module.recipientreports.filter.searchstring" extensionName="Rsmbouncemailprocessor">Email contains</f:translate></label>
 					<f:form.textfield property="searchstring" value="{piVars.filter.searchstring}" id="searchstring" class="form-control" />
 				</div>
-				<div class="col-12 col-md-3">
+				<div class="col-12 col-md-2">
 					<label for="searchamount" class="form-label"><f:translate key="module.recipientreports.filter.searchamount" extensionName="Rsmbouncemailprocessor">Minimum bounces</f:translate></label>
 					<f:form.textfield property="searchamount" value="{piVars.filter.searchamount}" id="searchamount" class="form-control" type="number" additionalAttributes="{min: '0'}" />
+				</div>
+				<div class="col-12 col-md-2">
+					<label for="status" class="form-label"><f:translate key="module.recipientreports.filter.status" extensionName="Rsmbouncemailprocessor">Status</f:translate></label>
+					<f:form.select property="status" value="{piVars.filter.status}" id="status" class="form-select">
+						<f:form.select.option value=""><f:translate key="module.recipientreports.filter.status.all" extensionName="Rsmbouncemailprocessor">All</f:translate></f:form.select.option>
+						<f:form.select.option value="open"><f:translate key="module.recipientreports.filter.status.open" extensionName="Rsmbouncemailprocessor">Not removed</f:translate></f:form.select.option>
+						<f:form.select.option value="removed"><f:translate key="module.recipientreports.filter.status.removed" extensionName="Rsmbouncemailprocessor">Removed</f:translate></f:form.select.option>
+					</f:form.select>
 				</div>
 				<div class="col-12 col-md-4 d-flex gap-2">
 					<f:form.submit value="{f:translate(key: 'module.recipientreports.filter.submit', extensionName: 'Rsmbouncemailprocessor')}" class="btn btn-primary" />
