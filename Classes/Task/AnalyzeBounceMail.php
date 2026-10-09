@@ -687,7 +687,7 @@ class AnalyzeBounceMail extends AbstractTask
                         ->select(
                             ['*'],
                             $table,
-                            ['email' => $email]
+                            ['email' => $email, 'deleted' => 0]
                         );
                     if ($resultRows) {
                         $row = $resultRows->fetchAssociative();
