@@ -67,6 +67,13 @@ class Recipientreport extends AbstractEntity
      */
     protected $countsum = 0;
 
+    /**
+     * Timestamp at which the process task removed the address from the recipient lists, 0 if not removed
+     *
+     * @var int
+     */
+    protected $removed = 0;
+
 
     /**
      * @return string
@@ -255,5 +262,18 @@ class Recipientreport extends AbstractEntity
         return $this->countunknownreason + $this->countnosenderfound + $this->countuserunknown + $this->countquotaexceeded + $this->countconnectionrefused + $this->countheadererror + $this->countoutofoffice + $this->countfilterlist + $this->countmessagesize + $this->countpossiblespam;
     }
 
+    public function getRemoved(): int
+    {
+        return $this->removed;
+    }
 
+    public function setRemoved(int $removed): void
+    {
+        $this->removed = $removed;
+    }
+
+    public function isRemoved(): bool
+    {
+        return $this->removed > 0;
+    }
 }

@@ -28,7 +28,8 @@ CREATE TABLE tx_rsmbouncemailprocessor_domain_model_recipientreport
 	countoutofoffice       int(11) NOT NULL DEFAULT '0',
 	countfilterlist        int(11) NOT NULL DEFAULT '0',
 	countmessagesize       int(11) NOT NULL DEFAULT '0',
-	countpossiblespam      int(11) NOT NULL DEFAULT '0'
+	countpossiblespam      int(11) NOT NULL DEFAULT '0',
+	removed                int(11) NOT NULL DEFAULT '0'
 );
 
 CREATE TABLE tx_rsmbouncemailprocessor_domain_model_deletelog
