@@ -96,7 +96,9 @@ class RecipientreportController extends ActionController
         }
         $rootline = GeneralUtility::makeInstance(RootlineUtility::class, $currentPid)->get();
         $recipientreports = $this->recipientreportRepository->findByRootline($rootline, $searchstring, $searchamount, $status);
-        if (! count($recipientreports)) {
+        $filterActive = $searchstring !== '' || $searchamount > 0 || $status !== '';
+        // without a filter there are no reports on this page, with a filter just none that match
+        if (! count($recipientreports) && ! $filterActive) {
             return new ForwardResponse('choosePage');
         }
 
@@ -104,7 +106,7 @@ class RecipientreportController extends ActionController
         $moduleTemplate->assignMultiple($this->reportPresenter->presentRecipientreports($recipientreports));
         $moduleTemplate->assignMultiple([
             'piVars' => $piVars,
-            'filterActive' => $searchstring !== '' || $searchamount > 0 || $status !== '',
+            'filterActive' => $filterActive,
             'activeTab' => 'recipients',
         ]);
         return $moduleTemplate->renderResponse('Recipientlist');

@@ -64,6 +64,13 @@
 		<f:translate key="module.recipientreports.list.count" extensionName="Rsmbouncemailprocessor" arguments="{0: summary.recipients}">%s recipients</f:translate>
 	</p>
 
+	<f:if condition="{rows}">
+	<f:else>
+		<f:be.infobox state="-1">
+			<f:translate key="module.recipientreports.list.nomatch" extensionName="Rsmbouncemailprocessor">No recipient reports match the filter.</f:translate>
+		</f:be.infobox>
+	</f:else>
+	<f:then>
 	<div class="table-fit">
 		<table class="table table-hover align-middle rsm-table">
 			<thead>
@@ -110,5 +117,7 @@
 			</tbody>
 		</table>
 	</div>
+	</f:then>
+	</f:if>
 </f:section>
 </html>

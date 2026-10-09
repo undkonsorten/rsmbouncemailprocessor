@@ -222,6 +222,9 @@
 			<trans-unit id="module.recipientreports.list.count">
 				<source>%s recipients</source>
 			</trans-unit>
+			<trans-unit id="module.recipientreports.list.nomatch">
+				<source>No recipient reports match the filter.</source>
+			</trans-unit>
 			<trans-unit id="module.recipientreports.list.removed">
 				<source>removed on %s</source>
 			</trans-unit>
