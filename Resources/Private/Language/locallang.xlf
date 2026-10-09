@@ -210,6 +210,12 @@
 			<trans-unit id="module.recipientreports.list.count">
 				<source>%s recipients</source>
 			</trans-unit>
+			<trans-unit id="module.recipientreports.list.removed">
+				<source>removed on %s</source>
+			</trans-unit>
+			<trans-unit id="module.recipientreports.list.removed.title">
+				<source>The address has been removed from the recipient lists by the process task</source>
+			</trans-unit>
 		</body>
 	</file>
 </xliff>

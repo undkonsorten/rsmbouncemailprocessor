@@ -71,6 +71,12 @@
 					<tr>
 						<td>
 							<strong>{row.report.email}</strong>
+							<f:if condition="{row.report.removed}">
+								<f:variable name="removedDate"><f:format.date format="d.m.Y H:i">{row.report.removed}</f:format.date></f:variable>
+								<span class="badge text-bg-success ms-1" title="{f:translate(key: 'module.recipientreports.list.removed.title', extensionName: 'Rsmbouncemailprocessor')}">
+									<f:translate key="module.recipientreports.list.removed" extensionName="Rsmbouncemailprocessor" arguments="{0: removedDate}">removed on %s</f:translate>
+								</span>
+							</f:if>
 							<div class="text-body-secondary small">uid {row.report.uid}</div>
 						</td>
 						<td class="text-end"><span class="badge text-bg-secondary">{row.total}</span></td>
