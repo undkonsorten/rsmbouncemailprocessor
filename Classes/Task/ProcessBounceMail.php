@@ -135,50 +135,42 @@ class ProcessBounceMail extends AbstractTask
                         $logvalue = $row[$key];
 
                         // remove the recipient from all recipient lists we've found
-                        $listid = 0;
                         $removed = false;
                         foreach ($recipientLists as $recipientList) {
                             if ($recipientList && $row['email']) {
 
-                                // get the pid
-                                $logpid = $recipientList->getRecipientListPage() ?? 0;
-
-                                // remove the recipient
+                                // remove the recipient, the count tells whether the address was in this list
                                 try {
+                                    $countBefore = $recipientList->getRecipientsCount();
                                     $recipientList->removeRecipientByEmail($row['email']);
+                                    $this->persistenceManager()->persistAll();
                                     $removed = true;
+                                    $removedFromList = $recipientList->getRecipientsCount() < $countBefore;
                                 } catch (\Exception) {
-                                    $logpid = null;
+                                    $removedFromList = false;
                                 }
 
-                                // delete log enabled?
-                                if ($logpid && $listid < 1) {
-                                    if (isset($this->conf['settings.']['deletelog.']['enabled']) && isset($this->conf['settings.']['deletelog.']['pid'])) {
-                                        if ($this->conf['settings.']['deletelog.']['enabled'] == 1) {
-                                            if ($this->conf['settings.']['deletelog.']['pid'] > 0) {
-
-                                                // write delete log entry
-                                                $queryBuilderAddLog = $this->connectionPool()->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_deletelog');
-                                                $affectedRows = $queryBuilderAddLog
-                                                    ->insert('tx_rsmbouncemailprocessor_domain_model_deletelog')
-                                                    ->values([
-                                                        'pid' => $this->conf['settings.']['deletelog.']['pid'],
-                                                        'email' => $row['email'],
-                                                        'tstamp' => time(),
-                                                        'crdate' => time(),
-                                                        'deletetime' => time(),
-                                                        'reasontext' => $key,
-                                                        'reasonvalue' => $logvalue
-                                                    ])
-                                                    ->executeStatement();
-                                            }
-
-                                        }
+                                // one delete log entry per list the address has been removed from
+                                if ($removedFromList && (int)($this->conf['settings.']['deletelog.']['enabled'] ?? 0) === 1) {
+                                    $deletelogPid = (int)($this->conf['settings.']['deletelog.']['pid'] ?? 0);
+                                    if ($deletelogPid > 0) {
+                                        $queryBuilderAddLog = $this->connectionPool()->getQueryBuilderForTable('tx_rsmbouncemailprocessor_domain_model_deletelog');
+                                        $queryBuilderAddLog
+                                            ->insert('tx_rsmbouncemailprocessor_domain_model_deletelog')
+                                            ->values([
+                                                'pid' => $deletelogPid,
+                                                'email' => $row['email'],
+                                                'origpid' => (int)($recipientList->getRecipientListPage() ?? 0),
+                                                'tstamp' => time(),
+                                                'crdate' => time(),
+                                                'deletetime' => time(),
+                                                'reasontext' => $key,
+                                                'reasonvalue' => $logvalue
+                                            ])
+                                            ->executeStatement();
                                     }
-
                                 }
                             }
-                            $listid ++;
                         }
 
                         // Make persistent
